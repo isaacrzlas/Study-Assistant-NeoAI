@@ -1,4 +1,4 @@
-# Neo AI Study Assistant
+# Study Assistant NeoAI
 
 Neo AI is a modern AI-powered study assistant built to help students upload notes, generate summaries, create quizzes, and chat with their study material.
 
