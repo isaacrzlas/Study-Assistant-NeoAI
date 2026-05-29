@@ -1112,7 +1112,7 @@ body.light .section::before {
 
 .file-tracker-widget {
   grid-column: 1 / -1;
-  min-height: 210px;
+  min-height: 190px;
 }
 
 .span-2 {
@@ -1177,23 +1177,24 @@ body.light .section::before {
 
 .file-tracker {
   display: grid;
-  grid-template-columns: minmax(150px, .2fr) minmax(220px, .28fr) minmax(360px, .52fr);
+  grid-template-columns: 150px minmax(220px, 320px) minmax(0, 1fr);
   gap: 16px;
-  align-items: stretch;
+  align-items: center;
   margin-top: 22px;
 }
 
 .file-count {
   display: grid;
   place-items: center;
-  min-height: 124px;
+  min-height: 112px;
+  aspect-ratio: 1 / .72;
   border: 1px solid rgba(46, 74, 61, .5);
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(39, 68, 54, .34), rgba(9, 17, 13, .34));
 }
 
 .file-count strong {
-  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-size: 4.2rem;
   line-height: .9;
   color: #ecfff6;
 }
@@ -1210,21 +1211,26 @@ body.light .section::before {
 .file-tracker > p {
   align-self: center;
   margin: 0;
+  max-width: 30ch;
 }
 
 .mini-file-list {
-  display: grid;
+  display: flex;
   gap: 8px;
-  align-content: start;
-  max-height: 210px;
-  overflow: auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
 }
 
 .mini-file {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 10px;
+  flex: 0 0 min(260px, 48vw);
+  min-height: 86px;
   padding: 10px 12px;
   border: 1px solid rgba(46, 74, 61, .45);
   border-radius: 8px;
@@ -1244,9 +1250,14 @@ body.light .section::before {
 }
 
 .mini-file strong {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mini-file small {
+  grid-column: 2;
 }
 
 body.light .file-count,
@@ -2859,10 +2870,20 @@ body.light .delete-history {
 
   .file-tracker {
     grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .file-count {
+    aspect-ratio: auto;
+  }
+
+  .file-tracker > p {
+    max-width: none;
   }
 
   .mini-file {
     grid-template-columns: auto minmax(0, 1fr);
+    flex-basis: min(280px, 86vw);
   }
 
   .mini-file small {
