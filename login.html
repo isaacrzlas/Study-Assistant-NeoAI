@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | Neo AI</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas id="ambient-canvas" aria-hidden="true"></canvas>
+    <div class="noise" aria-hidden="true"></div>
+    <section class="auth-screen">
+      <div class="auth-card">
+        <div class="brand auth-brand">
+          <span class="brand-mark">N</span>
+          <span>
+            <strong>Neo</strong>
+            <small>AI</small>
+          </span>
+        </div>
+        <p class="eyebrow">Google account workspace</p>
+        <h1>Save your AI notes, study sets, flashcards, and planner progress.</h1>
+        <p class="powered-copy">Powered by Groq API, with Gemini available as an alternate provider.</p>
+        <div class="auth-actions">
+          <button class="primary-action" id="googleLogin" type="button">Continue with Google</button>
+          <button class="ghost-action" id="guestLogin" type="button">Continue as Guest</button>
+        </div>
+        <div id="googleButton" class="google-button-slot"></div>
+        <small>Guest mode is temporary. Google login requires a configured OAuth Client ID in the app code.</small>
+      </div>
+    </section>
+    <div class="modal-backdrop hidden" id="usernameModal">
+      <div class="modal-card">
+        <p class="eyebrow">Create Neo AI account</p>
+        <h2>Choose a username</h2>
+        <p>This username will be linked to your Google email in this browser.</p>
+        <input id="usernameInput" placeholder="Username" autocomplete="nickname" />
+        <button class="primary-action" id="saveUsername" type="button">Create Account</button>
+      </div>
+    </div>
+    <div class="toast" id="toast">Ready</div>
+    <script>
+      const toast = document.querySelector("#toast");
+      const showToast = text => {
+        toast.textContent = text;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2500);
+      };
+      let pendingProfile = null;
+      const accounts = () => JSON.parse(localStorage.getItem("neoAccounts") || "{}");
+      const saveAccounts = value => localStorage.setItem("neoAccounts", JSON.stringify(value));
+      const finishProfile = profile => {
+        const db = accounts();
+        if (!db[profile.email]) {
+          pendingProfile = profile;
+          document.querySelector("#usernameModal").classList.remove("hidden");
+          return;
+        }
+        setUser({ ...profile, username: db[profile.email].username });
+      };
+      const setUser = user => {
+        localStorage.setItem("neoCurrentUser", JSON.stringify(user));
+        location.href = "index.html";
+      };
+      const setGuest = () => {
+        sessionStorage.setItem("neoGuestMode", "true");
+        location.href = "index.html";
+      };
+      const GOOGLE_CLIENT_ID = "967831627983-bs7gk0onoap67u78qps7mip9ni787t59.apps.googleusercontent.com";
+      const decodeJwtPayload = token => JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      const loadGoogleScript = () => new Promise((resolve, reject) => {
+        if (window.google?.accounts?.id) return resolve();
+        const script = document.createElement("script");
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+      document.querySelector("#googleLogin").addEventListener("click", async () => {
+        const clientId = GOOGLE_CLIENT_ID;
+        if (!clientId || clientId === "PASTE_GOOGLE_OAUTH_CLIENT_ID_HERE") {
+          showToast("Real Google popup needs a Google OAuth Web Client ID in login.html.");
+          return;
+        }
+        try {
+          await loadGoogleScript();
+          google.accounts.id.initialize({
+            client_id: clientId,
+            callback: response => {
+              const profile = decodeJwtPayload(response.credential);
+              finishProfile({ name: profile.name, email: profile.email, picture: profile.picture, provider: "google" });
+            }
+          });
+          google.accounts.id.renderButton(document.querySelector("#googleButton"), { theme: "outline", size: "large", shape: "rectangular", text: "continue_with" });
+          google.accounts.id.prompt();
+        } catch {
+          showToast("Could not load Google login.");
+        }
+      });
+      addEventListener("message", event => {
+        if (event.origin !== location.origin) return;
+        if (event.data?.type !== "neo-google-demo-login") return;
+        setUser(event.data.user);
+      });
+      document.querySelector("#guestLogin").addEventListener("click", setGuest);
+      document.querySelector("#saveUsername").addEventListener("click", () => {
+        const username = document.querySelector("#usernameInput").value.trim();
+        if (!username || !pendingProfile) return showToast("Enter a username.");
+        const db = accounts();
+        db[pendingProfile.email] = { username, email: pendingProfile.email, picture: pendingProfile.picture, createdAt: new Date().toISOString() };
+        saveAccounts(db);
+        setUser({ ...pendingProfile, username });
+      });
+    </script>
+  </body>
+</html>

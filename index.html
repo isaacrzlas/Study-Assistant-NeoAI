@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neo AI</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0f0d'/%3E%3Cpath d='M17 46V18h7l16 19V18h7v28h-7L24 27v19h-7Z' fill='%23a7f3d0'/%3E%3Ccircle cx='48' cy='16' r='5' fill='%2334d399'/%3E%3C/svg%3E" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas id="ambient-canvas" aria-hidden="true"></canvas>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <section class="auth-screen" id="authScreen">
+      <div class="auth-card">
+        <div class="brand auth-brand">
+          <span class="brand-mark">N</span>
+          <span>
+            <strong>Neo</strong>
+            <small>AI</small>
+          </span>
+        </div>
+        <p class="eyebrow">Secure study workspace</p>
+        <h1>Sign in to save notes, summaries, quiz progress, and chat history.</h1>
+        <p class="powered-copy">Powered by Groq API, with Gemini available as an alternate provider.</p>
+        <div class="auth-actions">
+          <button class="primary-action google-auth-button" id="googleLogin" type="button"><span>G</span>Continue with Google</button>
+          <button class="ghost-action" id="guestLogin" type="button">Continue as Guest</button>
+        </div>
+        <div id="googleButton" class="google-button-slot"></div>
+        <small>Guest mode is temporary and does not save files, quiz progress, summaries, or chat history.</small>
+        <div class="auth-footer">
+          <span>© 2026 Neo AI. All rights reserved.</span>
+          <strong>Made by Isaac Gazula</strong>
+        </div>
+      </div>
+    </section>
+
+    <div class="modal-backdrop hidden" id="usernameModal">
+      <div class="modal-card">
+        <p class="eyebrow">Create Neo AI account</p>
+        <h2>Choose a username</h2>
+        <p>Your Google email will be used as the account key, and this username will be saved to your Neo AI workspace.</p>
+        <input id="usernameInput" placeholder="Username" autocomplete="nickname" />
+        <button class="primary-action" id="saveUsername" type="button">Create Account</button>
+      </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="geminiKeyModal">
+      <div class="modal-card gemini-modal">
+        <p class="eyebrow">AI provider setup</p>
+        <h2>Add your API key</h2>
+        <p>Neo can use Groq or Gemini for summaries, quizzes, and chat. Groq is selected by default.</p>
+        <p class="setup-note">Get a Groq key from <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer">Groq Console</a>, or a Gemini key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">Google AI Studio</a>.</p>
+        <label class="key-field">
+          <span>Provider</span>
+          <select id="modalProviderInput">
+            <option value="groq">Groq AI (Priority)</option>
+            <option value="gemini">Google Gemini</option>
+          </select>
+        </label>
+        <label class="key-field">
+          <span>API key</span>
+          <div class="secret-row">
+            <input id="modalApiKeyInput" type="password" placeholder="Paste API key" autocomplete="off" />
+            <button class="ghost-action" id="modalToggleApiKey" type="button">Show</button>
+          </div>
+        </label>
+        <label class="key-field">
+          <span>Model</span>
+          <select id="modalModelInput">
+            <option value="llama-3.3-70b-versatile">Groq Llama 3.3 70B Versatile</option>
+            <option value="llama-3.1-8b-instant">Groq Llama 3.1 8B Instant</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+          </select>
+        </label>
+        <button class="primary-action" id="modalSaveApiKey" type="button">Save AI Key</button>
+        <p class="inline-status" id="modalGeminiStatus">Waiting for an API key.</p>
+      </div>
+    </div>
+
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand">
+        <span class="brand-mark">N</span>
+        <span>
+          <strong>Neo</strong>
+          <small>AI</small>
+        </span>
+      </div>
+      <nav class="nav-list">
+        <a class="nav-item active" href="#dashboard" data-section="dashboard"><span>⌘</span>Command</a>
+        <a class="nav-item" href="#upload" data-section="upload"><span>↑</span>Notes</a>
+        <a class="nav-item" href="#summaries" data-section="summaries"><span>≡</span>Summaries</a>
+        <a class="nav-item" href="#quiz" data-section="quiz"><span>?</span>Quiz</a>
+        <a class="nav-item" href="#settings" data-section="settings"><span>⚙</span>Settings</a>
+      </nav>
+      <div class="sidebar-card">
+        <span class="pulse-dot"></span>
+        <strong>Readiness</strong>
+        <p id="sidebarInsight">Upload notes to calculate readiness, weak areas, and next actions.</p>
+      </div>
+    </aside>
+
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Learning Dashboard</p>
+          <h1>Your notes, summaries, quizzes, and chat in one unified space.</h1>
+        </div>
+        <div class="top-actions">
+          <div class="profile-pill hidden" id="profilePill">
+            <span id="profileInitial">U</span>
+            <strong id="profileName">Student</strong>
+          </div>
+          <button class="icon-button" id="themeToggle" aria-label="Toggle theme">◐</button>
+          <button class="ghost-action" id="signOut" type="button">Sign Out</button>
+          <button class="magnetic primary-action" data-open-chat>Ask Neo</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="hero section reveal">
+        <div class="hero-copy">
+          <div class="hero-badge"><span></span> Live semantic memory online</div>
+          <h2>Study with an AI that understands every page, slide, formula, and weak spot.</h2>
+          <p>
+            Neo converts uploaded materials into chat context, key concepts, formula sheets,
+            and practice questions that stay grounded in your files.
+          </p>
+          <div class="hero-actions">
+            <button class="magnetic primary-action" data-jump="upload">Upload Notes</button>
+            <button class="magnetic ghost-action" data-jump="summaries">Generate Summary</button>
+          </div>
+        </div>
+        <div class="orbital-panel" aria-label="Study progress overview">
+          <div class="orbit-ring"></div>
+          <div class="glass-card ai-core">
+            <span class="pulse-dot"></span>
+            <h3>Neo Core</h3>
+            <p id="coreSourceCount">No sources uploaded</p>
+            <strong id="coreTokenCount">0 tokens indexed</strong>
+          </div>
+          <div class="float-card c1">
+            <small>Settings</small>
+            <strong id="floatWeak">AI setup</strong>
+            <button class="mini-quiz-button" data-jump="settings" type="button">Open Settings</button>
+          </div>
+          <div class="float-card c2"><span class="dash-icon">→</span><small>Next action</small><strong id="floatTask">Upload notes</strong></div>
+          <div class="float-card c3">
+            <small>Quiz</small>
+            <strong id="floatStreak">Not generated</strong>
+            <button class="mini-quiz-button" data-jump="quiz" type="button">Generate Quiz</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="widget-grid section reveal" id="dashboard-widgets" data-page="dashboard" aria-label="Dashboard widgets">
+        <article class="widget span-2 interactive-card file-tracker-widget">
+          <div class="widget-head">
+            <div>
+              <p class="eyebrow">Files</p>
+              <h3>Uploaded file tracker</h3>
+            </div>
+            <span class="status-pill" id="fileTrackerStatus">No uploads</span>
+          </div>
+          <div class="file-tracker">
+            <div class="file-count">
+              <strong id="dashboardFileCount">0</strong>
+              <span>files uploaded</span>
+            </div>
+            <p id="dashboardFileCopy">Upload notes to start grounding summaries, quizzes, and chat.</p>
+            <div class="mini-file-list" id="dashboardFileList">
+              <div class="empty-state">No uploaded files yet.</div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section id="upload" class="section two-column reveal">
+        <div class="panel upload-panel">
+          <div class="section-heading">
+            <p class="eyebrow">Upload Notes & AI Chat</p>
+            <h2>Drop any learning material and ask questions against it.</h2>
+          </div>
+          <label class="dropzone" id="dropzone">
+            <input id="fileInput" type="file" multiple accept=".pdf,.txt,.md,.csv,.json,.js,.ts,.py,.html,.css,image/*" />
+            <span class="upload-glyph">↑</span>
+            <strong>Drop PDFs, slides, handwritten notes, images, or docs</strong>
+            <small>Use Groq or Gemini for real AI answers. PDFs are text-extracted locally when possible.</small>
+          </label>
+          <p class="token-disclaimer">
+            For best results, upload smaller focused files or single chapters. Large files use more AI tokens, which can reduce how much you can use the app on a free API key.
+          </p>
+          <p class="account-storage-note">
+            Signed-in accounts restore uploaded files and extracted text after refresh. Guest mode stays temporary.
+          </p>
+          <div class="api-panel compact-api-panel">
+            <div>
+              <strong>AI provider status</strong>
+              <small>Configure Groq or Gemini in Settings. Documents are used only when you chat or click a Generate button.</small>
+            </div>
+            <button class="ghost-action" data-jump="settings" type="button">Open Settings</button>
+          </div>
+          <div class="file-stack empty" id="fileStack">
+            <div class="empty-state">No files uploaded yet. Add a readable text-based note to ground the chat.</div>
+          </div>
+        </div>
+
+        <div class="panel chat-panel" id="chatPanel">
+          <div class="chat-head">
+            <div>
+              <p class="eyebrow">Contextual memory</p>
+              <h3>Ask Neo</h3>
+            </div>
+            <span class="status-pill" id="aiStatus">Local mode</span>
+          </div>
+          <div class="suggestions" id="suggestions">
+            <button>Explain this simply</button>
+            <button>Summarize my upload</button>
+            <button>Important formulas</button>
+            <button>Likely exam questions</button>
+          </div>
+          <div class="messages" id="messages" aria-live="polite">
+            <div class="message ai empty-chat"><strong>Upload material to begin.</strong><p>After you add files, ask anything about them. Groq is the priority provider, with Gemini still available in Settings.</p></div>
+          </div>
+          <form class="chat-input" id="chatForm">
+            <input id="chatInput" placeholder="Ask about your uploaded notes..." autocomplete="off" />
+            <button class="magnetic" aria-label="Send message">↗</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="summaries" class="section reveal">
+        <div class="section-heading row">
+          <div>
+            <p class="eyebrow">Smart Summaries</p>
+            <h2>Key concepts and formulas generated directly from your upload.</h2>
+          </div>
+          <button class="primary-action magnetic" id="generateSummary" type="button">Generate Summary</button>
+        </div>
+        <div class="summary-grid" id="summaryGrid">
+          <article class="summary-card expanded">
+            <button class="summary-toggle">Key Concepts <span>−</span></button>
+            <div>
+              <p>Upload notes to generate key concepts.</p>
+            </div>
+          </article>
+          <article class="summary-card">
+            <button class="summary-toggle">Formula Sheet <span>+</span></button>
+            <div>
+              <p>Upload notes to extract important formulas.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="quiz" class="section two-column reveal">
+        <div class="panel quiz-panel">
+          <div class="section-heading">
+            <p class="eyebrow">AI Quiz Generator</p>
+            <h2>Generate MCQs or practice objective questions in chat.</h2>
+          </div>
+          <div class="quiz-mode-actions">
+            <button class="primary-action magnetic" id="generateQuiz" type="button">Generate 10 MCQs</button>
+            <button class="ghost-action" id="objectiveQuiz" type="button">Objective Questions in Chat</button>
+          </div>
+          <div class="quiz-meta">
+            <span>Question <b id="questionNumber">0</b>/<b id="questionTotal">0</b></span>
+            <span><b id="timer">00:00</b></span>
+          </div>
+          <div class="quiz-progress"><span id="quizProgress"></span></div>
+          <h3 id="questionText">Upload notes to generate a quiz.</h3>
+          <div class="answers" id="answers"></div>
+          <button class="ghost-action" id="nextQuestion">Next Question</button>
+        </div>
+
+        <div class="panel flash-panel mcq-history-panel">
+          <div class="section-heading">
+            <p class="eyebrow">MCQ History</p>
+            <h2>Scores saved for this account.</h2>
+          </div>
+          <div class="mcq-history-list" id="mcqHistoryList">
+            <div class="empty-state">No MCQ history yet. Finish a quiz to save your score and time.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="section reveal">
+        <div class="section-heading row">
+          <div>
+            <p class="eyebrow">Settings</p>
+            <h2>Connect Groq or Gemini and control the model Neo uses for every AI feature.</h2>
+          </div>
+          <span class="status-pill" id="settingsStatus">Local mode</span>
+        </div>
+        <div class="settings-grid">
+          <article class="panel settings-panel">
+            <div class="settings-title">
+              <span class="brand-mark">G</span>
+              <div>
+                <p class="eyebrow">AI Provider</p>
+                <h3>API key and model</h3>
+              </div>
+            </div>
+            <label>
+              <span>Provider</span>
+              <select id="providerInput">
+                <option value="groq">Groq AI (Priority)</option>
+                <option value="gemini">Google Gemini</option>
+              </select>
+            </label>
+            <label>
+              <span>API key</span>
+              <div class="secret-row">
+                <input id="apiKeyInput" type="password" placeholder="Paste your API key" autocomplete="off" />
+                <button class="ghost-action" id="toggleApiKeyVisibility" type="button">Show</button>
+              </div>
+            </label>
+            <label>
+              <span>Model</span>
+              <select id="modelInput">
+                <option value="llama-3.3-70b-versatile">Groq Llama 3.3 70B Versatile</option>
+                <option value="llama-3.1-8b-instant">Groq Llama 3.1 8B Instant</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+              </select>
+            </label>
+            <button class="primary-action" id="saveApiKey" type="button">Save AI Settings</button>
+            <p class="inline-status" id="geminiInlineStatus">Waiting for an API key.</p>
+            <small>Your key is stored in this browser's local storage and sent directly to the selected provider. Create keys in <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer">Groq Console</a> or <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">Google AI Studio</a>.</small>
+            <small class="token-note">Tip: smaller uploads use fewer tokens, so your free API quota lasts longer.</small>
+          </article>
+          <article class="widget interactive-card">
+            <p class="eyebrow">Generation flow</p>
+            <h3>Upload first, generate second</h3>
+            <p>Summaries, MCQs, objective practice, and chat answers use uploaded files only after you upload a document and click the relevant action.</p>
+          </article>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span>© 2026 Neo AI. All rights reserved.</span>
+        <strong>Made by Isaac Gazula</strong>
+      </footer>
+    </main>
+
+    <button class="floating-chat magnetic" data-open-chat aria-label="Open AI chat">AI</button>
+    <div class="toast" id="toast">Plan adapted around your missed session.</div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
