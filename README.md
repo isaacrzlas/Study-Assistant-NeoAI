@@ -138,4 +138,4 @@ Application: Study Assistant NeoAI
 Created by: Isaac Gazula  
 Version: 1.0  
 
-(c) Study Assistant NeoAI. All Rights Reserved.
+© Study Assistant NeoAI. All Rights Reserved.
