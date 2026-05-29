@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Neo AI Study Assistant
 
 Neo AI is a modern AI-powered study assistant built to help students upload notes, generate summaries, create quizzes, and chat with their study material.
@@ -91,3 +92,7 @@ http://localhost:9011
 All rights reserved.
 
 Copyright 2026 Neo AI.
+=======
+# Study-Assistant-NeoAI
+A study assistant web app powered by NeoAI (API-based AI) services for generating summaries, quizzes, objective practice, and document-based chat from uploaded notes and files. Built to support per-account persistence, Google login, and a polished dashboard workflow.
+>>>>>>> e5c3fd0286ed00e70500104ec59c308b700d34d4
