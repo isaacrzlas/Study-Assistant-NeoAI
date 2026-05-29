@@ -34,7 +34,7 @@ Made by Isaac Gazula.
 2. Open the project folder:
 
 ```powershell
-cd "C:\Users\isaac\Documents\Codex\2026-05-29\study-assistant-neoai-isaacg"
+cd "C:\Users\Example\Downloads\study-assistant-neoai-isaacg"
 ```
 
 3. Start the local server:
