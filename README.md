@@ -84,10 +84,6 @@ For best usage, upload smaller focused files or single chapters. Large files use
 8. Use Objective Questions in Chat for short-answer practice.
 9. Return later with the same Google account to restore saved files and history.
 
-## Screenshots
-
-Screenshots can be added here after portfolio capture.
-
 ## Project Architecture
 
 - `index.html` contains the main application structure, authentication screen, dashboard, upload page, summaries page, quiz page, and settings page.
